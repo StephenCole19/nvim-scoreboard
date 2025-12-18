@@ -6,7 +6,7 @@ local config = {
   show_sports = true,
   teams = { "Packers", "Maple Leafs" },
   refresh_interval = 60,
-  height = 1,
+  height = 4,
   text = "",
 }
 
@@ -29,45 +29,46 @@ local function create_topbar()
   vim.api.nvim_buf_set_option(topbar_buf, "modifiable", false)
 end
 
-local function format_team_box(data)
-  local ok, result = pcall(function()
-    if not data then
-      return "[Error: No data]"
-    end
-    
-    if data.error then
-      return string.format("[%s: %s]", data.error, "N/A")
-    end
-    
-    if data.status == "No game scheduled" then
-      return string.format("[%s %s: No game]", data.league or "???", data.abbrev or "???")
-    end
-    
-    if data.status == "live" then
-      return string.format("[🔴 %s %d - %s %d | %s]",
-        data.away_team or "???", data.away_score or 0,
-        data.home_team or "???", data.home_score or 0,
-        data.time or "LIVE"
-      )
-    elseif data.status == "upcoming" then
-      return string.format("[%s: %s vs %s | %s]",
-        data.league or "???",
-        data.away_team or "???", data.home_team or "???",
-        data.time or "TBD"
-      )
-    else
-      return string.format("[FINAL: %s %d - %s %d]",
-        data.away_team or "???", data.away_score or 0,
-        data.home_team or "???", data.home_score or 0
-      )
-    end
-  end)
-  
-  if ok then
-    return result
-  else
-    return "[Error]"
+local function create_block(data)
+  if not data then
+    return { "╭── Error ──╮", "│  No Data  │", "│           │", "╰───────────╯" }
   end
+
+  local line1_text = ""
+  local line2_text = ""
+
+  if data.error then
+    line1_text = "Error"
+    line2_text = "N/A"
+  elseif data.status == "No game scheduled" then
+    line1_text = string.format("%s: %s", data.league or "???", data.abbrev or "???")
+    line2_text = "No game"
+  elseif data.status == "live" then
+    line1_text = string.format("🔴 %s %d-%d %s", data.away_team or "???", data.away_score or 0, data.home_score or 0, data.home_team or "???")
+    line2_text = data.time or "LIVE"
+  elseif data.status == "upcoming" then
+    line1_text = string.format("%s: %s vs %s", data.league or "???", data.away_team or "???", data.home_team or "???")
+    line2_text = data.time or "TBD"
+  else -- Final
+    line1_text = string.format("FINAL: %s vs %s", data.away_team or "???", data.home_team or "???")
+    line2_text = string.format("%d - %d", data.away_score or 0, data.home_score or 0)
+  end
+
+  local width = math.max(vim.fn.strdisplaywidth(line1_text), vim.fn.strdisplaywidth(line2_text)) + 2
+  local top_border = "╭" .. string.rep("─", width) .. "╮"
+  local bottom_border = "╰" .. string.rep("─", width) .. "╯"
+  
+  local l1_padding = width - vim.fn.strdisplaywidth(line1_text)
+  local l1_left = math.floor(l1_padding / 2)
+  local l1_right = l1_padding - l1_left
+  local line1 = "│" .. string.rep(" ", l1_left) .. line1_text .. string.rep(" ", l1_right) .. "│"
+
+  local l2_padding = width - vim.fn.strdisplaywidth(line2_text)
+  local l2_left = math.floor(l2_padding / 2)
+  local l2_right = l2_padding - l2_left
+  local line2 = "│" .. string.rep(" ", l2_left) .. line2_text .. string.rep(" ", l2_right) .. "│"
+
+  return { top_border, line1, line2, bottom_border }
 end
 
 local function fetch_sports_data()
@@ -100,28 +101,48 @@ update_topbar_content = function()
     end
 
     local width = vim.o.columns
-    local content = ""
+    local content_lines = { "", "", "", "" }
+    local has_content = false
     
     if config.show_sports and #config.teams > 0 then
-      local boxes = {}
       for i, _ in ipairs(config.teams) do
         if cached_sports_data[i] then
-          local box = format_team_box(cached_sports_data[i])
-          if box then
-            table.insert(boxes, box)
+          local block_lines = create_block(cached_sports_data[i])
+          if block_lines then
+            has_content = true
+            for j = 1, 4 do
+              content_lines[j] = content_lines[j] .. (content_lines[j] ~= "" and "  " or "") .. block_lines[j]
+            end
           end
         end
       end
-      content = table.concat(boxes, " ")
     else
-      content = config.text or ""
+      local text = config.text or ""
+      content_lines[2] = text
+      has_content = (text ~= "")
     end
     
-    local padding = math.floor((width - #content) / 2)
-    local padded_text = string.rep(" ", math.max(0, padding)) .. content
+    local final_lines = {}
+    if has_content then
+       local content_width = 0
+       if config.show_sports then
+         content_width = vim.fn.strdisplaywidth(content_lines[1])
+       else
+         content_width = vim.fn.strdisplaywidth(content_lines[2])
+       end
+
+       local padding = math.floor((width - content_width) / 2)
+       local left_pad = string.rep(" ", math.max(0, padding))
+
+       for j = 1, 4 do
+         table.insert(final_lines, left_pad .. content_lines[j])
+       end
+    else
+       final_lines = { "", "", "", "" }
+    end
 
     vim.api.nvim_buf_set_option(topbar_buf, "modifiable", true)
-    vim.api.nvim_buf_set_lines(topbar_buf, 0, -1, false, { padded_text })
+    vim.api.nvim_buf_set_lines(topbar_buf, 0, -1, false, final_lines)
     vim.api.nvim_buf_set_option(topbar_buf, "modifiable", false)
   end)
 end
