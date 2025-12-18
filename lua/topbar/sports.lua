@@ -3,8 +3,8 @@ local M = {}
 local team_mappings = {
   ["green bay packers"] = { league = "nfl", espn_name = "Green Bay Packers", abbrev = "GB", team_id = "9" },
   ["packers"] = { league = "nfl", espn_name = "Green Bay Packers", abbrev = "GB", team_id = "9" },
-  ["toronto maple leafs"] = { league = "nhl", espn_name = "Toronto Maple Leafs", abbrev = "TOR", team_id = "10" },
-  ["maple leafs"] = { league = "nhl", espn_name = "Toronto Maple Leafs", abbrev = "TOR", team_id = "10" },
+  ["toronto maple leafs"] = { league = "nhl", espn_name = "Toronto Maple Leafs", abbrev = "TOR", team_id = "21" },
+  ["maple leafs"] = { league = "nhl", espn_name = "Toronto Maple Leafs", abbrev = "TOR", team_id = "21" },
 }
 
 local function normalize_team_name(name)

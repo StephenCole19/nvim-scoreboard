@@ -189,20 +189,28 @@ local function show_topbar()
   create_topbar()
   update_topbar_content()
 
-  local width = vim.o.columns
+  vim.cmd("topleft " .. config.height .. "split")
+  topbar_win = vim.api.nvim_get_current_win()
+  vim.api.nvim_win_set_buf(topbar_win, topbar_buf)
 
-  topbar_win = vim.api.nvim_open_win(topbar_buf, false, {
-    relative = "editor",
-    row = 0,
-    col = 0,
-    width = width,
-    height = config.height,
-    style = "minimal",
-    focusable = false,
-    zindex = 100,
-  })
+  local win_opts = {
+    number = false,
+    relativenumber = false,
+    cursorline = false,
+    cursorcolumn = false,
+    foldcolumn = "0",
+    signcolumn = "no",
+    list = false,
+    spell = false,
+    winfixheight = true,
+    winhl = "Normal:TopbarNormal",
+  }
 
-  vim.api.nvim_win_set_option(topbar_win, "winhl", "Normal:TopbarNormal")
+  for k, v in pairs(win_opts) do
+    vim.api.nvim_win_set_option(topbar_win, k, v)
+  end
+
+  vim.cmd("wincmd p")
 
   vim.o.showtabline = 0
 
