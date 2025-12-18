@@ -5,8 +5,6 @@ local team_mappings = {
   ["packers"] = { league = "nfl", espn_name = "Green Bay Packers", abbrev = "GB", team_id = "9" },
   ["toronto maple leafs"] = { league = "nhl", espn_name = "Toronto Maple Leafs", abbrev = "TOR", team_id = "10" },
   ["maple leafs"] = { league = "nhl", espn_name = "Toronto Maple Leafs", abbrev = "TOR", team_id = "10" },
-  ["montreal canadiens"] = { league = "nhl", espn_name = "Montreal Canadiens", abbrev = "MTL", team_id = "8" },
-  ["canadiens"] = { league = "nhl", espn_name = "Montreal Canadiens", abbrev = "MTL", team_id = "8" },
 }
 
 local function normalize_team_name(name)
